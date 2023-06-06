@@ -1,5 +1,6 @@
 using Vegperiod
-using Test: @testset, @test, @test_throws, @test_broken, @test_skip, @test_logs
+using Dates
+using Test
 using Random
 using Printf
 using Logging
@@ -24,10 +25,8 @@ end
 # or then https://github.com/maxbennedich/julia-regression-analysis or ...)
 
 Random.seed!(1234)
+include("01-unit-tests.jl")
 
-# cd("test")
-# include("01-unit-tests.jl")
-
-# include("02-integration-tests.jl")
+include("02-integration-tests.jl")
 
 # include("03-regression-tests.jl")
