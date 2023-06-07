@@ -5,6 +5,8 @@ using Random
 using Printf
 using Logging
 
+import DataFrames: groupby, subset
+
 # Note the git hash-string and repository status (can be optionally used in filenames for plots etc.)
 git_status_string = "__$(today())git+"*chomp(Base.read(`git rev-parse --short HEAD`, String))*
             ifelse(length(Base.read(`git status --porcelain`, String))==0, "+gitclean","+gitdirty")*

@@ -1,49 +1,48 @@
 module Vegperiod
-export vegperiod
+export vegperiod, VegetationStartMethod, VegetationEndMethod
+export Menzel, startETCCDI, Ribes_Uva_Crispa                         # VegetationStartMethods
+export VonWilpert, LWF_BROOK90, NuskeAlbert, end_ETCCDI, endStdMeteo # VegetationEndMethods
 
+using DataFrames
+using DataFramesMeta
+import Statistics: mean
+
+include("methods.jl")
 
 using Dates
 
 """
 Calculate start and end date of vegetation periods based on daily average
 air temperature and the day of the year (DOY).
-The sum of day degrees within the vegetation period is included for convenience.
+The sum of day degrees within the vegetation period can be included for convenience.
 
 Common methods for determining the onset and end of thermal vegetation
-periods are provided, for details see next sections. Popular choices with
-regard to forest trees in Germany are `Menzel` and `vonWilpert`. Climate
-change impact studies at NW-FVA are frequently conducted using `Menzel` with
+periods are provided, for details see the documentation of each method.
+Popular choices with regard to forest trees in Germany are `Menzel` and `vonWilpert`.
+Climate change impact studies at NW-FVA are frequently conducted using `Menzel` with
 "Picea abies (frueh)" and `NuskeAlbert` for all tree species; with tree
 species specifics accounted for in subsequent statistical models.
 
-#' @param dates vector of calendar dates (objects of class `Date` or something
-#'   understood by [as.Date()]). Must contain entire years if `est.prev > 0`
-#'   else the first year may comprise only November and December.
-#' @param Tavg vector of daily average air temperatures in degree Celsius.
-#'   Same length as `dates`.
+Available methods can be queried with `subtypes(VegetationStartMethod)` and `subtypes(VegetationEndMethod)`
 
-#' @param start.method name of method to use for vegetation start. One of
-#'   `"Menzel"` (needs additional argument `species`, see below), `"StdMeteo"`
-#'   resp. `"ETCCDI"`, `"Ribes uva-crispa"`. Can be abbreviated (partial
-#'   matching). For further discussion see Details.
-#' @param end.method name of method to use for vegetation end. One of
-#'   `"vonWilpert"`, `"LWF-BROOK90"`, `"NuskeAlbert"` and `"StdMeteo"` resp.
-#'   `"ETCCDI"`. Can be abbreviated (partial matching). For further discussion
-#'   see Details.
+Arguments:
+- `dates`  is a vector of calendar dates (object of class `Date`). Must contain
+entire years if `est_prev > 0` else the first year may comprise only November and December.
+- `Tavg` is a vector of daily average air temperatures in degree Celsius. Same length as `dates`.
 
-#' @param Tsum.out boolean. Return the sum of daily mean temperatures above
-#'   `Tsum.crit` within vegetation period, also known as growing day degrees.
-#' @param Tsum.crit threshold for sum of day degrees. Only daily mean temperatures
-#'   `> Tsum.crit` will be tallied. The default of `0` prevents negative
-#'   daily temperatures from reducing the sum. Climate change studies often use
-#'   a threshold of `5`.
+- `start_method` is a VegetationStartMethod.
+- `end_method` is a VegetationEndMethod.
+- `Tsum_out` is a boolean. Return the sum of daily mean temperatures above
+   `Tsum_crit` within vegetation period, also known as growing day degrees.
+- `Tsum_crit threshold for sum of day degrees. Only daily mean temperatures `> Tsum_crit`
+    will be tallied. The default of `0` prevents negative daily temperatures from reducing the sum.
+    Climate change studies often use a threshold of `5`.
+- check.data is a boolean. Perform plausibility checks on the temperature data.
+    Plausible range is -35 to +40°C.
 
-#' @param check.data Performs plausibility checks on the temperature data to
-#'   ensure that the temperatures have not been multiplied by ten.
-#'   Plausible range is -35 to +40°C.
-#'
+
 #' @return A data.frame with year and DOY of start and end day of
-#'   vegetation period. If `Tsum.out=TRUE`, the data.frame contains an
+#'   vegetation period. If `Tsum_out=TRUE`, the data.frame contains an
 #'   additional column with the sum of day degrees within vegetation periods.
 #'
 
@@ -58,62 +57,97 @@ species specifics accounted for in subsequent statistical models.
 #'           species="Picea abies (frueh)", est.prev=0)
 #'
 #' # add column with sum of day degrees in vegetation periods
-#' vegperiod(dates=date, Tavg=t, Tsum.out=TRUE,
+#' vegperiod(dates=date, Tavg=t, Tsum_out=TRUE,
 #'           start="StdMeteo", end="StdMeteo")
 #' @md
 #' @export
 """
-function vegperiod(dates, Tavg;
-    start_method = "default",
-    end_method = "default",
-    species = nothing,
+function vegperiod(
+    dates,
+    Tavg,
+    start_method,
+    end_method;
     check_data = true)
 
-    # start_method in ["Menzel",     "StdMeteo", "ETCCDI", "RibesUvaCrispa"]             || error("Unknown start_method: $(start_method)")
-    # end_method   in ["vonWilpert", "StdMeteo", "ETCCDI", "LWF-BROOK90", "NuskeAlbert"] || error("Unknown end_method: $(end_method)")
-    start_method in ["Menzel"    ] || error("Unknown start_method: $(start_method)")
-    end_method   in ["vonWilpert"] || error("Unknown end_method: $(end_method)")
+    # Check input types
+    start_method isa VegetationStartMethod || error("""
+        The argument start_method must be of type VegetationStartMethod. Check available methods with: `subtypes(VegetationStartMethod)`""")
+    end_method   isa VegetationEndMethod   || error("""
+        The argument end_method must be of type VegetationEndMethod. Check available methods with: `subtypes(VegetationEndMethod)`""")
 
+    dates isa AbstractArray || eltype(dates) == Date || error("""
+        The argument dates must be a vector of Dates, e.g. `[Date(\"2023-06-06\")]`""")
+    Tavg isa AbstractArray  || eltype(Tavg)  == Real || error("""
+        The argument Tavg must be a vector of reals.""")
+    length(dates) == length(Tavg) || error("""
+        The arguments dates and Tavg must be of same length!""")
 
-    # For Menzel
-    ## Parse species
-    if start_method == "Menzel"
-        possible_species = [
-            "Larix decidua", "Picea abies (frueh)",
-            "Picea abies (spaet)", "Picea abies (noerdl.)",
-            "Picea omorika", "Pinus sylvestris",
-            "Betula pubescens", "Quercus robur",
-            "Quercus petraea", "Fagus sylvatica"]
-        if isnothing(species) error("Provide a species for method Menzel. Possibilities: $possible_species") end
-        species in possible_species || error("Unknown species: $(species) for method Menzel. Possibilities: $possible_species")
+    # Check input values
+    # Check Tavg (only if requested)
+    if check_data
+        # Parse temperature values of Tavg
+        (minimum(Tavg) > -35 && maximum(Tavg) < 40) || error("""
+            Your input temperature data exceeds the plausible range of -35 to +40°.
+            You may want to double check your data.
+            If you still want to use the given data, set `check_data` to false.""")
     end
 
-    # Parse length of Tavg and dates
-    length(dates) == length(Tavg) || error("The arguments dates and Tavg must be of same length!")
-
-    # Parse temperature values of Tavg
-    !check_data || (minimum(Tavg) > -35 && maximum(Tavg) < 40) || error("""
-        Your input temperature data exceeds the plausible range of -35 to +40°.
-        You may want to double check your data.
-        If you still want to use the given data, set `check_data` to false.""")
-
-    # Check for consecutive days
-        # Add test
-        # Check for leap years
-
+    # Check dates
+    # a) Check for continuous/consecutive/ordered dates
+    idx_gap = findall(diff(dates) .!= Day(1))
+    if !isempty(idx_gap)
+        gaps = dates[sort([idx_gap; idx_gap .+ 1;])]
+        error("The argument dates is not consecutive or ordered. There are gaps at position(s) $idx_gap: \n $(gaps)")
+    end
+    # b) Check for complete years
+    # Check starting date of first year
+    if typeof(start_method) == Menzel
+        if start_method.est_prev == 0
+            dates[1] < Date(year(dates[1]), 11, 01) || error(
+                "With `Menzel(..., est_prev == 0)` the first year must contain November and December. Current start date is: $(dates[1])")
+        else
+            n_year_needed = start_method.est_prev
+            n_year_available = length(unique(year.(dates)))
+            n_year_needed < n_year_available || error(
+                "With `Menzel(..., est_prev == $n_year_needed)` at least $n_year_needed years are needed in the argument `dates`. Got $n_year_available. ")
+        end
+    else
+        dates[1] == Date(year(dates[1]), 01, 01)
+        error("First year must start on January 01st. Current start date is: $(dates[1])")
+    end
+    # Check ending date of last year
+    dates[end] > Date(year(dates[end]), 10, 05) || error(
+        "Last year must extend at least beyond October 5th. Current end date is: $(dates[end])")
 
 
     # Compute start
+    start_dates = get_vegetation_start(dates, Tavg, start_method)
 
     # Compute end
+    # end_dates = get_vegetation_end(dates, Tavg, end_method) # TODO: activate function
 
+    # Combine start and end dates
+    return_dates = start_dates # TODO: join end_dates by year
 
-    return "nice!"
+    return return_dates
 end
 
+"""
+    get_vegetation_start(dates, Tavg, start_method)
 
-function startDOYs(start_method)
-    start_method in ["Menzel"    ] || error("Unknown start_method: $(start_method)")
+Function to get a data frame with start dates for each year.
+Takes thre mandatory arguments `dates` and `Tavg` (see documentation for `vegperiod`), and
+`start_method` (a `VegetationStartMethod`).
+
+Returns a `DataFrame` with columns `year`, `startdate`, `startDOY`.
+
+Depending on `start_method` additional optional arguments are possible, mostly for internal
+testing purposes.
+"""
+function get_vegetation_start(dates, Tavg, start_method)
+    @warn "Unspecified method"
+    return DataFrame(year = 1, startdate = Date("2001-01-01"), startDOY = 1)
 end
+
 
 end # module Vegperiod
