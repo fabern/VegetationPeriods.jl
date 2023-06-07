@@ -1,6 +1,3 @@
-abstract type VegetationStartMethod end
-abstract type VegetationEndMethod end
-
 # Start methods ############################################################################
 """
     Menzel(species; est_prev::Int = 0)
@@ -254,8 +251,6 @@ commonly used for all tree species throughout Germany. As usual, the rules
 regarding the soilmatrix are neglected in this implementation.
 
 
-**Not yet implemented!**
-
 # Reference
 von Wilpert, K. (1990)
 Die Jahrringstruktur von Fichten in Abhängigkeit vom Bodenwasserhaushalt
@@ -264,6 +259,14 @@ standortsspezifischer Wasserstreßdispostion.
 *Freiburger Bodenkundliche Abhandlungen*.
 """
 struct VonWilpert{} <: VegetationEndMethod
+    Threshold_degC::Real # = default is 10  # °C
+    LastDOY::Int         # = default is 279
+end
+function VonWilpert(; Threshold_degC::Real = 10., LastDOY::Int = 279)
+    VonWilpert(Threshold_degC, LastDOY)
+end
+function Base.show(io::IO, meth::VonWilpert) # constructor function
+    print(io, "VonWilpert(Threshold_degC = \"$(meth.Threshold_degC)\", LastDOY = $(meth.LastDOY))")
 end
 
 """
@@ -280,55 +283,113 @@ end
 #' - last day of the vegetation period is DOY 279 (5th of October in leap years)
 """
 function get_vegetation_end(dates, Tavg, end_method::VonWilpert)#; Treshold=10, LastDOY=279)
+    df = DataFrame(dates = dates, Tavg = Tavg, year = year.(dates))
 
-    years = unique(year.(dates))
     # Assumptions:
     # - data.frame 'df' contains month, DOY, Tavg
     # - DOYs at least till LastDOY
 
-    # # Preparation ##########################################################################
-    # # moving average with windows size 7 (symetric)
-    # df$TmovAvg <- as.numeric(stats::filter(df$Tavg, rep(1/7,7), sides=2))
+    df = DataFrame(dates = dates, Tavg = Tavg, year = year.(dates))
 
-    # # mark periods ('cold', 'warm') before LastDOY and 'ignore' the rest
-    # df$period <- ifelse(df$DOY > LastDOY, 'ignore',
-    #                     ifelse(df$TmovAvg < Treshold, 'cold', 'warm'))
+    # compute moving average
+    # movingaverage(g, n) = [i < n ? mean(g[begin:i]) : mean(g[i-n+1:i]) for i in 1:length(g)]
+    movingaverage(g, n) = [i < n ? NaN : mean(g[i-n+1:i]) for i in 1:length(g)]
+    movingaverage_sides2_floor(g, n) = [# centered, floor when n is pair
+        (i < (ceil(Int,n/2)) || i > (length(g)-floor(Int,n/2))) ?
+        # NaN : i-(ceil(Int,n/2))+1:i+floor(Int,n/2) for i in 1:length(g)]
+        NaN : mean(g[i-(ceil(Int,n/2))+1:i+floor(Int,n/2)]) for i in 1:length(g)]
 
-    # # determine continous strides of warm/cold by using run length encoding
-    # # cold period if stride at least 5
-    # # warm period if stride more than 5
-    # temp <- rle(df$period)
-    # temp$values[temp$lengths < 5] <- 'ignore'
-    # temp$values[temp$values == 'warm' & temp$lengths < 6] <- 'ignore'
-    # temp$values[is.na(temp$values)] <- 'ignore'
-    # df$period <- inverse.rle(temp)
+    movingaverage_sides2_ceil(g, n) = [# centered, ceil when n is pair
+        (i < 1+(floor(Int,n/2)) || i > (1+length(g)-ceil(Int,n/2))) ?
+        # NaN : i-(floor(Int,n/2)):i+ceil(Int,n/2)-1 for i in 1:length(g)]
+        NaN : mean(g[i-(floor(Int,n/2)):i+ceil(Int,n/2)-1]) for i in 1:length(g)]
+        # movingaverage_sides2_floor(Tavg[1:20], 8)
+        # movingaverage_sides2_ceil(Tavg[1:20], 8)
+        # movingaverage_sides2_floor(Tavg[1:20], 7)
+        # movingaverage_sides2_ceil(Tavg[1:20], 7)
+    # movingaverage(Tavg[1:20], 7)
+    movingaverage_sides2_floor(Tavg[1:20], 7)
+    movingaverage_sides2_ceil(Tavg[1:20], 7)
+    movingaverage(Tavg[1:20], 7)
 
-    # LastDOY <- as.integer(LastDOY)
+    df2 = @chain df begin
+        transform(:dates => ByRow(dayofyear) => :DOY)
+        # moving average with windows size 7 (symmetric)
+            # transform(:Tavg => (T -> movingaverage(T, 7))) # not symmetric
+        transform(:Tavg => (T -> movingaverage_sides2_ceil(T, 7)) => :TmovAvg)
+        # mark periods ('cold', 'warm') before LastDOY and 'ignore' the rest
+        transform([:dates, :TmovAvg] => ByRow((d, Tmov) ->
+            ifelse(dayofyear(d) > end_method.LastDOY || isnan(Tmov),
+                "ignore",
+                ifelse(Tmov < end_method.Threshold_degC, "cold","warm"))) => :period)
+    end
+    # determine continous strides of warm/cold by using run length encoding
+    # cold period if stride at least 5
+    # warm period if stride more than 5
 
-    # # Searching for the end ################################################################
-    # # last warm period per year
-    # last.warm <- tapply(df$DOY[df$period == 'warm'],
-    #                     df$year[df$period == 'warm'],
-    #                     FUN=max)
-    # last.warm <- data.frame(year=as.integer(row.names(last.warm)), DOY=last.warm)
+    # all(inverse_rle(rle(df2.period)...) .== df2.period)
+    temp = rle(df2.period)
+    temp_values  = temp[1]
+    temp_lengths = temp[2]
+    temp_values[temp_lengths .< 5] .= "ignore";
+    temp_values[temp_values .== "warm" .&& temp_lengths .< 6] .= "ignore";
+    # temp_values[isnan.(temp_values)] <- 'ignore'# not needed
+    df2[:,:period_corrected] = inverse_rle(temp_values, temp_lengths)
 
-    # # loop over all years
-    # years <- unique(df$year)
-    # end <- sapply(years,
-    #                 # cold period after last.warm? (yes: min(cold)+4; no: LastDOY)
-    #                 FUN=function(x) {
-    #                 # cold period after warm period?
-    #                 temp <- df[df$year == x & df$period == 'cold', 'DOY']
-    #                 temp <- temp[temp > last.warm[last.warm$year == x, 'DOY']]
-    #                 if(length(temp) > 0){
-    #                     # 5th day of cold period is the end
-    #                     min(temp) + 4L
-    #                 } else {
-    #                     # no colds after last.warm ->  default end
-    #                     LastDOY
-    #                 }
-    #                 }
-    # )
+    # Searching for the end ################################################################
+    # last warm period per year
+    # @chain df2[(2*365+1):4*365+1,:] begin
+    df_lastWarm = @chain df2 begin
+        @rsubset(:period_corrected == "warm")
+        groupby(:year)
+        combine(last)
+        combine([:year, :DOY])
+        rename(:DOY => :lastWarmDOY)
+    end
+
+    # cold period after last.warm? (yes: min(cold)+4; no: LastDOY)
+    df3 = @chain leftjoin(df2, df_lastWarm, on = :year) begin
+        groupby(:year)
+        transform([:DOY, :lastWarmDOY, :period_corrected] =>
+                    ((current, last, p) -> (p .== "cold" .&& current .> last)) =>
+                    :is_a_cold_day_after_last_warm)
+        groupby(:year)
+        transform([:is_a_cold_day_after_last_warm] => cumsum => :cold_day_after_last_warm)
+    end
+
+    df4 = @chain df3 begin
+        @rsubset(:cold_day_after_last_warm == 1)
+        select([:year, :lastWarmDOY, :DOY])
+        rename(:DOY => :firstColdDayAfterLastWarm)
+        rightjoin(df_lastWarm, on = [:year, :lastWarmDOY])
+        transform([:lastWarmDOY, :firstColdDayAfterLastWarm] => ByRow((w, c) -> ismissing(c) ? w : c .+ 4) => :endDOY)
+        @orderby(:year)
+    end
+
+    df4.enddate = Date.(df4.year) .+ Day.(df4.endDOY .- 1)
+
+    return select(df4, [:year, :enddate, :endDOY])
+
+            # for #each year
+            # temp = df2[df2.year .== 2001 .&&
+            #             df2.period_corrected .== "cold" .&&
+            #             df2.DOY .> df_lastWarm[df_lastWarm.year .== 2001,:lastWarmDOY], :]
+            # end
+
+            # cold period after last.warm? (yes: min(cold)+4; no: LastDOY)
+            # FUN=function(x) {
+            # # cold period after warm period?
+            # temp <- df[df$year == x & df$period == 'cold', 'DOY']
+            # temp <- temp[temp > last.warm[last.warm$year == x, 'DOY']]
+            # if(length(temp) > 0){
+            #     # 5th day of cold period is the end
+            #     min(temp) + 4L
+            # } else {
+            #     # no colds after last.warm ->  default end
+            #     LastDOY
+            # }
+            # }
+
 
     return years
 end

@@ -3,13 +3,18 @@ export vegperiod, VegetationStartMethod, VegetationEndMethod
 export Menzel, startETCCDI, Ribes_Uva_Crispa                         # VegetationStartMethods
 export VonWilpert, LWF_BROOK90, NuskeAlbert, end_ETCCDI, endStdMeteo # VegetationEndMethods
 
+using Dates
 using DataFrames
 using DataFramesMeta
 import Statistics: mean
+import StatsBase: rle, inverse_rle # for VonWilpert
+
+
+abstract type VegetationStartMethod end
+abstract type VegetationEndMethod end
 
 include("methods.jl")
 
-using Dates
 
 """
 Calculate start and end date of vegetation periods based on daily average
@@ -124,18 +129,17 @@ function vegperiod(
     start_dates = get_vegetation_start(dates, Tavg, start_method)
 
     # Compute end
-    # end_dates = get_vegetation_end(dates, Tavg, end_method) # TODO: activate function
+    end_dates = get_vegetation_end(dates, Tavg, end_method)
 
     # Combine start and end dates
-    return_dates = start_dates # TODO: join end_dates by year
+    return leftjoin(start_dates, end_dates, on = [:year])
 
-    return return_dates
 end
 
 """
     get_vegetation_start(dates, Tavg, start_method)
 
-Function to get a data frame with start dates for each year.
+Function to get a data frame with start dates of vegetation period for each year.
 Takes thre mandatory arguments `dates` and `Tavg` (see documentation for `vegperiod`), and
 `start_method` (a `VegetationStartMethod`).
 
@@ -144,9 +148,26 @@ Returns a `DataFrame` with columns `year`, `startdate`, `startDOY`.
 Depending on `start_method` additional optional arguments are possible, mostly for internal
 testing purposes.
 """
-function get_vegetation_start(dates, Tavg, start_method)
+function get_vegetation_start(dates, Tavg, start_method::VegetationStartMethod)
     @warn "Unspecified method"
     return DataFrame(year = 1, startdate = Date("2001-01-01"), startDOY = 1)
+end
+
+"""
+    get_vegetation_end(dates, Tavg, end_method)
+
+Function to get a data frame with end dates of vegetation period for each year.
+Takes thre mandatory arguments `dates` and `Tavg` (see documentation for `vegperiod`), and
+`end_method` (a `VegetationEndMethod`).
+
+Returns a `DataFrame` with columns `year`, `enddate`, `endDOY`.
+
+Depending on `end_method` additional optional arguments are possible, mostly for internal
+testing purposes.
+"""
+function get_vegetation_end(dates, Tavg, end_method::VegetationEndMethod)
+    @warn "Unspecified method"
+    return DataFrame(year = 1, enddate = Date("2001-12-31"), endDOY = 365)
 end
 
 

@@ -44,6 +44,20 @@ end
 @testset "VonWilpert" begin
     vw = VonWilpert()
     @test vw isa VegetationEndMethod
+    @test                  VonWilpert(Threshold_degC = 10,  LastDOY = 279) isa VegetationEndMethod
+    @test                  VonWilpert(Threshold_degC = 10., LastDOY = 279) isa VegetationEndMethod
+    @test_throws TypeError VonWilpert(Threshold_degC = "10.0", LastDOY = 279)
+
+
+    # Test values
+    @test vw.Threshold_degC == 10.0
+    @test vw.LastDOY == 279
+    vw2 = VonWilpert(Threshold_degC = 8., LastDOY = 266)
+    @test vw2.Threshold_degC == 8.0
+    @test vw2.LastDOY == 266
+
+    # Test function values
+    # ==> see @testset "vegetation_start" and "vegetation_end"
 end
 @testset "LWF_BROOK90" begin
     # TODO
@@ -97,7 +111,17 @@ end
 
 
     # Test return values of vegperiod()
-    # TODO
+    # Test only Menzel and VonWilpert here. The rest is in testsets "vegetation_start" and "vegetation_end":
+    res = vegperiod(dates_goe, Tavg_goe,
+                    Menzel("Picea abies (frueh)", est_prev=3),
+                    VonWilpert())
+    @test res.enddate
+    @test res.year == [2001, 2002, 2003]
+    @test res.startdate == Date.(["2001-04-29","2002-05-07","2003-05-05"])
+    @test res.startDOY == [119, 127, 125]
+    @test res.enddate == Date.(["2001-10-01","2002-10-06","2003-10-06"])
+    @test res.endDOY == [274, 279, 279]
+
 end
 
 
@@ -128,5 +152,11 @@ end
 end
 
 @testset "vegetation_end" begin
-    # TODO
+    # VonWilpert: =========
+    res1 = Vegperiod.get_vegetation_end(dates_goe, Tavg_goe, VonWilpert())
+    @test res1.year == 2001:2003 # 2001:2010
+    # print(IOContext(stdout, :compact=>false), res1.enddate)
+    @test res1.enddate == Date.(["2001-10-01", "2002-10-06", "2003-10-06"])#, "2004-10-05", "2005-10-02", "2006-09-28", "2007-10-06", "2008-10-05", "2009-10-06", "2010-10-06"])
+    # print(IOContext(stdout, :compact=>false), res1.endDOY)
+    @test res1.endDOY == [274, 279, 279] #, 279, 275, 271, 279, 279, 279, 279]
 end
