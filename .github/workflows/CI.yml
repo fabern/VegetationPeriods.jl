@@ -9,6 +9,15 @@ on:
     branches:
       - main
     tags: '*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      custom_input:
+        description: Manually started CI run
+        default: ""
+        required: false
+
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
@@ -17,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.9 or higher, change this to '1.9'.
+          - '1.9' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.9 or higher, change this to '1.9'.
           - '1' # Leave this line unchanged. '1' will automatically expand to the latest stable 1.x release of Julia.
           - 'nightly'
         os:
