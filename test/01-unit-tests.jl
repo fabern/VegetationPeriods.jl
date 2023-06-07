@@ -115,7 +115,6 @@ end
     res = vegperiod(dates_goe, Tavg_goe,
                     Menzel("Picea abies (frueh)", est_prev=3),
                     VonWilpert())
-    @test res.enddate
     @test res.year == [2001, 2002, 2003]
     @test res.startdate == Date.(["2001-04-29","2002-05-07","2003-05-05"])
     @test res.startDOY == [119, 127, 125]

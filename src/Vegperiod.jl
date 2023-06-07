@@ -113,7 +113,7 @@ function vegperiod(
         else
             n_year_needed = start_method.est_prev
             n_year_available = length(unique(year.(dates)))
-            n_year_needed < n_year_available || error(
+            n_year_needed <= n_year_available || error(
                 "With `Menzel(..., est_prev == $n_year_needed)` at least $n_year_needed years are needed in the argument `dates`. Got $n_year_available. ")
         end
     else
