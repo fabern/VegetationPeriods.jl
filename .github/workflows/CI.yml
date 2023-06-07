@@ -4,10 +4,10 @@ name: CI
 on:
   pull_request:
     branches:
-      - master
+      - main
   push:
     branches:
-      - master
+      - main
     tags: '*'
 jobs:
   test:
@@ -48,7 +48,7 @@ jobs:
           file: lcov.info
   ## NOTE: uncomment below to generate and deploy docs, also add the relevant deploy key as described
   ## in https://juliadocs.github.io/Documenter.jl/dev/man/hosting/#Authentication:-SSH-Deploy-Keys
-  # docs:                        
+  # docs:
   #   name: Documentation
   #   runs-on: ubuntu-latest
   #   steps:
