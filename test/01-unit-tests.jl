@@ -107,6 +107,24 @@ end
 # 2) Test internals ########################################################################
 ###################################################################
 @testset "vegetation_start" begin
+    # Menzel: =========
+    res1a,res1b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=3), return_intermediate_results = true)
+    res2a,res2b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=2), return_intermediate_results = true)
+    res3a,res3b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=0), return_intermediate_results = true)
+    # Test intermediate results
+    @test res1a.year == [2001, 2002, 2003]
+    @test res2a.year == [2001, 2002, 2003]
+    @test res3a.year == [2002, 2003]
+    res1c = subset(groupby(res1b, :year), [:has_started] => (s -> cumsum(s) .== 1))
+    res2c = subset(groupby(res2b, :year), [:has_started] => (s -> cumsum(s) .== 1))
+    res3c = subset(groupby(res3b, :year), [:has_started] => (s -> cumsum(s) .== 1))
+    @test res1c.is_chillday_sumNovDec_previousYear == [58, 59, 60] # R-pkg vegperiod 0.3.1 had [58.333, 59.0, 60.0]
+    @test res2c.is_chillday_sumNovDec_previousYear == [60, 59, 60] # R-pkg vegperiod 0.3.1 had [59.5, 59.0, 60.0]
+    @test res3c.is_chillday_sumNovDec_previousYear == [59, 60] # R-pkg vegperiod 0.3.1 had [59.0, 60.0]
+    # Test final result
+    @test res1a.startDOY == [119, 127, 125]       # R-pkg vegperiod 0.3.1 had [119, 127, 125]
+    @test res2a.startDOY == [118, 127, 125]       # R-pkg vegperiod 0.3.1 had [118, 127, 125]
+    @test res3a.startDOY == [127, 125]       # R-pkg vegperiod 0.3.1 had [127, 125]
 end
 
 @testset "vegetation_end" begin

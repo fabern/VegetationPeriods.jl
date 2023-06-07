@@ -66,6 +66,87 @@ end
 function Base.show(io::IO, meth::Menzel) # constructor function
     print(io, "Menzel(species = \"$(meth.species)\", est_prev = $(meth.est_prev))")
 end
+function get_vegetation_start(dates, Tavg, method::Menzel; return_intermediate_results = false)
+    df = DataFrame(dates = dates, Tavg = Tavg, year = year.(dates))
+
+    # define chill days
+    df2 = @chain df begin
+        transform(:Tavg => ((T) -> (T .<= method.parameter.TbCD)) => :is_chillday)
+        groupby([:year])
+        transform(:is_chillday => cumsum => :is_chillday_cumsum_currentYear)
+    end
+
+    # cumulative sums of chill days per year
+    df_prev_year_NovDec = @chain df2 begin
+        rename(:year => :prev_year)
+        subset(:dates => ByRow(x -> month(x) >= 11))
+        groupby(:prev_year)
+        combine(:is_chillday => sum => :is_chillday_sumNovDec_previousYear)
+    end
+    @assert all(diff(df_prev_year_NovDec.prev_year) .== 1) # ensure no gaps in data. Acutally not needed, if there is a year with no cool days it correctly appears as 0.
+
+    # add a row to store the NovDec chilldays of year previous to first year
+    insert!.(eachcol(df_prev_year_NovDec), 1, [df_prev_year_NovDec[1, :prev_year] - 1, 0]) # insert row for first year
+    df_prev_year_NovDec = transform(df_prev_year_NovDec, :prev_year => ((y)->(y .+ 1)) => :year)
+
+    # handle first year (either drop it or compute average from a number of years)
+    if method.est_prev == 0
+        # simply drop first year from time series
+        subset!(df2, :year => (y -> y .> minimum(y) ))
+        subset!(df_prev_year_NovDec, :year => (y -> y .> minimum(y) ))
+    else
+        # mean "est.prev number of years" as proxy for first year's previous chill days
+        avg_Nr_chilldays = round(Int, mean(df_prev_year_NovDec[(2:(method.est_prev+1)), :is_chillday_sumNovDec_previousYear]))
+        @assert df_prev_year_NovDec[1, :is_chillday_sumNovDec_previousYear] == 0 # assert we overwrite the right value
+        df_prev_year_NovDec[1, :is_chillday_sumNovDec_previousYear] = avg_Nr_chilldays
+    end
+
+    leftjoin!(df2, df_prev_year_NovDec, on = :year)
+    # leftjoin(df2, df_prev_year_NovDec, on = [:year => :year,]) # alternatively if two different names
+
+    # sum up total of relevant chill days
+    transform!(df2, [:is_chillday_cumsum_currentYear, :is_chillday_sumNovDec_previousYear] =>
+        ((curr, prev) -> curr + prev) => :cumsum_chillday_trigger)
+
+    # determine vegetation start with Menzel's regression
+    # critical temperature
+    df2[:,:TCrit] = ifelse.(
+        df2[:,:cumsum_chillday_trigger] .> 0,
+        method.parameter.a .+ method.parameter.b * log.(df2[:,:cumsum_chillday_trigger]),
+        method.parameter.a)
+
+    # cumsum of degrees above threshold
+    #  (start in Feb and consider only degrees above thresh)
+    df2[:,:Heat] = ifelse.(
+        (month.(df2[:,:dates]) .>= 2) .&& (df2[:,:Tavg] .> method.parameter.TbH),
+        df2[:,:Tavg] .- method.parameter.TbH,
+        0.)
+    transform!(groupby(df2, :year), :Heat => cumsum => :HeatSum)
+
+
+    # vegetation period start if HeatSum >= TCrit
+    season_start_raw = @chain df2 begin
+        groupby(:year)
+        transform([:HeatSum, :TCrit] => ((hs, tc) -> hs .>= tc) => :has_started)
+    end
+    # determine first of has_started candidates
+    season_start = @chain season_start_raw begin
+        groupby([:year, :has_started])
+        combine(first)
+        subset(:has_started => ByRow((s) -> s))
+        rename(:dates => :startdate)
+        transform(:startdate => ((sd) -> dayofyear.(sd)) => :startDOY)
+        # transform(:startdate => ByRow(dayofyear) => :startDOY)
+        # select(:year, :startDOY, :TCrit, :Heat, :HeatSum)
+        select(:year, :startdate, :startDOY)
+    end
+
+    if return_intermediate_results
+        return season_start, season_start_raw
+    else
+        return season_start
+    end
+end
 
 """
     startETCCDI()
