@@ -31,41 +31,34 @@ species specifics accounted for in subsequent statistical models.
 Available methods can be queried with `subtypes(VegetationStartMethod)` and `subtypes(VegetationEndMethod)`
 
 Arguments:
-- `dates`  is a vector of calendar dates (object of class `Date`). Must contain
-entire years if `est_prev > 0` else the first year may comprise only November and December.
+- `dates`  is a vector of calendar dates (object of class `Date`). Must contain entire years if `est_prev > 0` else the first year may comprise only November and December.
 - `Tavg` is a vector of daily average air temperatures in degree Celsius. Same length as `dates`.
-
 - `start_method` is a VegetationStartMethod.
 - `end_method` is a VegetationEndMethod.
 - `Tsum_out` is a boolean. Return the sum of daily mean temperatures above
    `Tsum_crit` within vegetation period, also known as growing day degrees.
-- `Tsum_crit threshold for sum of day degrees. Only daily mean temperatures `> Tsum_crit`
+- `Tsum_crit` threshold for sum of day degrees. Only daily mean temperatures above `Tsum_crit`
     will be tallied. The default of `0` prevents negative daily temperatures from reducing the sum.
     Climate change studies often use a threshold of `5`.
-- check.data is a boolean. Perform plausibility checks on the temperature data.
+- check_data is a boolean. Perform plausibility checks on the temperature data.
     Plausible range is -35 to +40°C.
 
+Returns:
+A `DataFrame` with year, date and DOY of start and end day of the vegetation period for (each)
+year of the input data.
 
-#' @return A data.frame with year and DOY of start and end day of
-#'   vegetation period. If `Tsum_out=TRUE`, the data.frame contains an
-#'   additional column with the sum of day degrees within vegetation periods.
-#'
+Example:
 
-#' @examples
-#' data(goe)
-#' vegperiod(dates=date, Tavg=t,
-#'           start.method="Menzel", end.method="vonWilpert",
-#'           species="Picea abies (frueh)", est.prev=5)
-#'
-#' # take chill days from first year, which is then dropped
-#' vegperiod(dates=date, Tavg=t, start="Menzel", end="vonWilpert",
-#'           species="Picea abies (frueh)", est.prev=0)
-#'
-#' # add column with sum of day degrees in vegetation periods
-#' vegperiod(dates=date, Tavg=t, Tsum_out=TRUE,
-#'           start="StdMeteo", end="StdMeteo")
-#' @md
-#' @export
+    dates   = Date("2018-01-01"):Day(1):Date("2022-12-31")
+    Tavg    = 
+        30 * (0.3 .+ 1/2*cos.(dayofyear.(dates)/365 * 2π .- π)) .+ 
+        rand([-34.9 : 0.1 : 39.9;]/10, length(dates))
+
+    vegperiod(
+        dates, 
+        Tavg, 
+        Menzel("Picea abies (frueh)", est_prev = 2), 
+        VonWilpert())
 """
 function vegperiod(
     dates,

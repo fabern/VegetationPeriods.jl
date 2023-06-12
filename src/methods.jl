@@ -30,7 +30,7 @@ Menzel, A. (1997)
 Phänologie von Waldbäumen unter sich ändernden Klimabedingungen -
 Auswertung der Beobachtungen in den Internationalen Phänologischen Gärten
 und Möglichkeiten der Modellierung von Phänodaten.
-*Forstliche Forschungsberichte München*.
+_Forstliche Forschungsberichte München_.
 """
 struct Menzel{} <: VegetationStartMethod
     species
@@ -164,14 +164,14 @@ Frich, P., Alexander, L., Della-Marta, P., Gleason, B., Haylock, M.,
 Klein Tank, A. and Peterson, T. (2002)
 Observed coherent changes in climatic extremes during the second half of
 the twentieth century.
-*Climate Research*, **19**, 193--212.
+_Climate Research_, **19**, 193--212.
 10.3354/cr019193.
 
 Zhang, X., Alexander, L., Hegerl, G. C., Jones, P., Tank, A. K.,
 Peterson, T. C., Trewin, B. and Zwiers, F. W. (2011)
 Indices for monitoring changes in extremes based on daily temperature and
 precipitation data.
-*Wiley Interdisciplinary Reviews: Climate Change*, **(6)**, 851--870.
+_Wiley Interdisciplinary Reviews: Climate Change_, **(6)**, 851--870.
 10.1002/wcc.147.
 """
 struct startETCCDI{} <: VegetationStartMethod
@@ -200,14 +200,14 @@ Frich, P., Alexander, L., Della-Marta, P., Gleason, B., Haylock, M.,
 Klein Tank, A. and Peterson, T. (2002)
 Observed coherent changes in climatic extremes during the second half of
 the twentieth century.
-*Climate Research*, **19**, 193--212.
+_Climate Research_, **19**, 193--212.
 10.3354/cr019193.
 
 Zhang, X., Alexander, L., Hegerl, G. C., Jones, P., Tank, A. K.,
 Peterson, T. C., Trewin, B. and Zwiers, F. W. (2011)
 Indices for monitoring changes in extremes based on daily temperature and
 precipitation data.
-*Wiley Interdisciplinary Reviews: Climate Change*, **(6)**, 851--870.
+_Wiley Interdisciplinary Reviews: Climate Change_, **(6)**, 851--870.
 10.1002/wcc.147.
 """
 struct startStdMeteo{} <: VegetationStartMethod
@@ -231,7 +231,7 @@ common simple meteorological procedures.
 ## Reference
 Janssen, W. (2009)
 Definition des Vegetationsanfanges.
-*Internal Report, Deutscher Wetterdienst, Abteilung Agrarmeteorologie*.
+_Internal Report, Deutscher Wetterdienst, Abteilung Agrarmeteorologie_.
 """
 struct Ribes_Uva_Crispa{} <: VegetationStartMethod
 end
@@ -246,7 +246,7 @@ end
     VonWilpert()
 
 The end method `VonWilpert` is based on von Wilpert (1990). It
-was originally developed for *Picea abies* in the Black Forest but is
+was originally developed for _Picea abies_ in the Black Forest but is
 commonly used for all tree species throughout Germany. As usual, the rules
 regarding the soilmatrix are neglected in this implementation.
 
@@ -256,7 +256,7 @@ von Wilpert, K. (1990)
 Die Jahrringstruktur von Fichten in Abhängigkeit vom Bodenwasserhaushalt
 auf Pseudogley und Parabraunerde: Ein Methodenkonzept zur Erfassung
 standortsspezifischer Wasserstreßdispostion.
-*Freiburger Bodenkundliche Abhandlungen*.
+_Freiburger Bodenkundliche Abhandlungen_.
 """
 struct VonWilpert{} <: VegetationEndMethod
     Threshold_degC::Real # = default is 10  # °C
@@ -412,7 +412,7 @@ Hammel, K. and Kennel, M. (2001)
 Charakterisierung und Analyse der Wasserverfügbarkeit und des
 Wasserhaushalts von Waldstandorten in Bayern mit dem Simulationsmodell
 BROOK90.
-*Forstliche Forschungsberichte München*.
+_Forstliche Forschungsberichte München_.
 """
 struct LWF_BROOK90{} <: VegetationEndMethod
 end
@@ -458,14 +458,14 @@ Frich, P., Alexander, L., Della-Marta, P., Gleason, B., Haylock, M.,
 Klein Tank, A. and Peterson, T. (2002)
 Observed coherent changes in climatic extremes during the second half of
 the twentieth century.
-*Climate Research*, **19**, 193--212.
+_Climate Research_, **19**, 193--212.
 10.3354/cr019193.
 
 Zhang, X., Alexander, L., Hegerl, G. C., Jones, P., Tank, A. K.,
 Peterson, T. C., Trewin, B. and Zwiers, F. W. (2011)
 Indices for monitoring changes in extremes based on daily temperature and
 precipitation data.
-*Wiley Interdisciplinary Reviews: Climate Change*, **(6)**, 851--870.
+_Wiley Interdisciplinary Reviews: Climate Change_, **(6)**, 851--870.
 10.1002/wcc.147.
 """
 struct endETCCDI{} <: VegetationEndMethod
@@ -494,14 +494,14 @@ Frich, P., Alexander, L., Della-Marta, P., Gleason, B., Haylock, M.,
 Klein Tank, A. and Peterson, T. (2002)
 Observed coherent changes in climatic extremes during the second half of
 the twentieth century.
-*Climate Research*, **19**, 193--212.
+_Climate Research_, **19**, 193--212.
 10.3354/cr019193.
 
 Zhang, X., Alexander, L., Hegerl, G. C., Jones, P., Tank, A. K.,
 Peterson, T. C., Trewin, B. and Zwiers, F. W. (2011)
 Indices for monitoring changes in extremes based on daily temperature and
 precipitation data.
-*Wiley Interdisciplinary Reviews: Climate Change*, **(6)**, 851--870.
+_Wiley Interdisciplinary Reviews: Climate Change_, **(6)**, 851--870.
 10.1002/wcc.147.
 """
 struct endStdMeteo{} <: VegetationEndMethod

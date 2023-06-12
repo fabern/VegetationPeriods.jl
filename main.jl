@@ -1,12 +1,36 @@
 using VegetationPeriods
 using Dates
 
-# dates   = Date("2020-01-01"):Day(1):Date("2022-12-31")
-# vegperiod(dates, Tavg, Menzel("Picea abies (frueh)"), VonWilpert())
-# vegperiod(dates, Tavg, Menzel("Picea abies (frueh)"), VonWilpert())
+dates   = Date("2018-01-01"):Day(1):Date("2022-12-31")
+Tavg    = 
+    30 * (0.3 .+ 1/2*cos.(dayofyear.(dates)/365 * 2π .- π)) .+ 
+    rand([-34.9 : 0.1 : 39.9;]/10, length(dates))
+# using Plots; plot(dates, Tavg)
+
+vegperiod(
+    dates, 
+    Tavg, 
+    Menzel("Picea abies (frueh)", est_prev = 2), 
+    VonWilpert())
+
+# 5×5 DataFrame
+#  Row │ year   startdate   startDOY  enddate     endDOY 
+#      │ Int64  Date        Int64     Date?       Int64? 
+# ─────┼─────────────────────────────────────────────────
+#    1 │  2018  2018-04-24       114  2018-10-03     276
+#    2 │  2019  2019-04-24       114  2019-09-29     272
+#    3 │  2020  2020-04-25       116  2020-10-02     276
+#    4 │  2021  2021-04-25       115  2021-10-03     276
+#    5 │  2022  2022-04-25       115  2022-10-02     275
+
 #### develop
 using RCall; R"library(vegperiod); y = 2; data(goe)";
 @rget goe
+vegperiod(
+    goe.date, 
+    goe.t, 
+    Menzel("Picea abies (frueh)", est_prev = 2), 
+    VonWilpert())
 # dates_goe   = Date("2001-01-01"):Day(1):Date("2010-12-31")
 # Tavg_goe    = rand([-34.9 : 0.1 : 39.9;], length(dates))
 dates_goe   = goe.date
