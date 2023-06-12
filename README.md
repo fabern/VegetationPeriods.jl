@@ -76,10 +76,10 @@ vegperiod(
 #   10 │  2010  2010-04-26       116  2010-10-06     279
 ```
 
-Above example shows the use of the function vegperiod()
+Above example shows the use of the function `vegperiod()`.
 To get help for any of these check out the documentation (`?` followed by the function name) e.g. as below:
 
-```julia
+```
 help?> vegperiod
 search: vegperiod VegetationPeriods
 
@@ -118,7 +118,7 @@ search: vegperiod VegetationPeriods
   the input data.
 ```
 Or for the start method `Menzel()`:
-```julia
+```
 help?> Menzel
 search: Menzel
 
