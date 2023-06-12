@@ -131,9 +131,9 @@ end
 ###################################################################
 @testset "vegetation_start" begin
     # Menzel: =========
-    res1a,res1b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=3), return_intermediate_results = true)
-    res2a,res2b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=2), return_intermediate_results = true)
-    res3a,res3b = Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=0), return_intermediate_results = true)
+    res1a,res1b = VegetationPeriods.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=3), return_intermediate_results = true)
+    res2a,res2b = VegetationPeriods.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=2), return_intermediate_results = true)
+    res3a,res3b = VegetationPeriods.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=0), return_intermediate_results = true)
     # Test intermediate results
     @test res1a.year == [2001, 2002, 2003]
     @test res2a.year == [2001, 2002, 2003]
@@ -152,7 +152,7 @@ end
 
 @testset "vegetation_end" begin
     # VonWilpert: =========
-    res1 = Vegperiod.get_vegetation_end(dates_goe, Tavg_goe, VonWilpert())
+    res1 = VegetationPeriods.get_vegetation_end(dates_goe, Tavg_goe, VonWilpert())
     @test res1.year == 2001:2003 # 2001:2010
     # print(IOContext(stdout, :compact=>false), res1.enddate)
     @test res1.enddate == Date.(["2001-10-01", "2002-10-06", "2003-10-06"])#, "2004-10-05", "2005-10-02", "2006-09-28", "2007-10-06", "2008-10-05", "2009-10-06", "2010-10-06"])

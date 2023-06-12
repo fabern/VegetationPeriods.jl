@@ -75,9 +75,9 @@ jobs:
   #     - run: |
   #         julia --project=docs -e '
   #           using Documenter: doctest
-  #           using Vegperiod
-  #           DocMeta.setdocmeta!(Vegperiod, :DocTestSetup, :(using Vegperiod); recursive=true)
-  #           doctest(Vegperiod)'
+  #           using VegetationPeriods
+  #           DocMeta.setdocmeta!(VegetationPeriods, :DocTestSetup, :(using VegetationPeriods); recursive=true)
+  #           doctest(VegetationPeriods)'
   #     - run: julia --project=docs docs/make.jl
   #       env:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

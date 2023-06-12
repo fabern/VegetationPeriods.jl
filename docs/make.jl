@@ -1,12 +1,12 @@
 # see documentation at https://juliadocs.github.io/Documenter.jl/stable/
 
-using Documenter, Vegperiod
+using Documenter, VegetationPeriods
 
 makedocs(
-    modules = [Vegperiod],
+    modules = [VegetationPeriods],
     format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
     authors = "Fabian Bernhard",
-    sitename = "Vegperiod.jl",
+    sitename = "VegetationPeriods.jl",
     pages = Any["index.md"]
     # strict = true,
     # clean = true,
@@ -16,6 +16,6 @@ makedocs(
 # Some setup is needed for documentation deployment, see “Hosting Documentation” and
 # deploydocs() in the Documenter manual for more information.
 deploydocs(
-    repo = "github.com/fabern/Vegperiod.jl.git",
+    repo = "github.com/fabern/VegetationPeriods.jl.git",
     push_preview = true
 )

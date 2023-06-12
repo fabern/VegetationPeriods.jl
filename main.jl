@@ -1,4 +1,4 @@
-using Vegperiod
+using VegetationPeriods
 using Dates
 
 # dates   = Date("2020-01-01"):Day(1):Date("2022-12-31")
@@ -16,14 +16,14 @@ Tavg_goe    = goe.t
 
 Menzel("Picea abies (frueh)")
 
-Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)"))
-Vegperiod.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=2))
+VegetationPeriods.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)"))
+VegetationPeriods.get_vegetation_start(dates_goe, Tavg_goe, Menzel("Picea abies (frueh)", est_prev=2))
 
 
 dates = dates_goe
 Tavg = Tavg_goe
 
-res1 = Vegperiod.get_vegetation_end(dates_goe, Tavg_goe, VonWilpert())
+res1 = VegetationPeriods.get_vegetation_end(dates_goe, Tavg_goe, VonWilpert())
 res1.year == 2001:2010
 # print(IOContext(stdout, :compact=>false), res1.enddate)
 res1.enddate == Date.(["2001-10-01", "2002-10-06", "2003-10-06", "2004-10-05", "2005-10-02", "2006-09-28", "2007-10-06", "2008-10-05", "2009-10-06", "2010-10-06"])

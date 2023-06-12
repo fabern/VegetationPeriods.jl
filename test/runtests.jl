@@ -1,4 +1,4 @@
-using Vegperiod
+using VegetationPeriods
 using Dates
 using Test
 using Random
@@ -37,5 +37,5 @@ include("02-integration-tests.jl")
 ## NOTE add JET to the test environment, then uncomment
 # using JET
 # @testset "static analysis with JET.jl" begin
-#     @test isempty(JET.get_reports(report_package(Vegperiod, target_modules=(Vegperiod,))))
+#     @test isempty(JET.get_reports(report_package(VegetationPeriods, target_modules=(VegetationPeriods,))))
 # end

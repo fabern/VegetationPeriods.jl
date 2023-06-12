@@ -1,3 +1,3 @@
-# Vegperiod
+# VegetationPeriods
 
 *Documentation goes here.*

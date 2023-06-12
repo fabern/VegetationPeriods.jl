@@ -1,4 +1,4 @@
-module Vegperiod
+module VegetationPeriods
 export vegperiod, VegetationStartMethod, VegetationEndMethod
 export Menzel, startETCCDI, Ribes_Uva_Crispa                         # VegetationStartMethods
 export VonWilpert, LWF_BROOK90, NuskeAlbert, end_ETCCDI, endStdMeteo # VegetationEndMethods
@@ -171,4 +171,4 @@ function get_vegetation_end(dates, Tavg, end_method::VegetationEndMethod)
 end
 
 
-end # module Vegperiod
+end # module VegetationPeriods
