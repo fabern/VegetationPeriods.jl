@@ -6,6 +6,8 @@ export VonWilpert, LWF_BROOK90, NuskeAlbert, end_ETCCDI, endStdMeteo # Vegetatio
 using Dates
 using DataFrames
 using DataFramesMeta
+using PrecompileTools
+
 import Statistics: mean
 import StatsBase: rle, inverse_rle # for VonWilpert
 
@@ -163,5 +165,27 @@ function get_vegetation_end(dates, Tavg, end_method::VegetationEndMethod)
     return DataFrame(year = 1, enddate = Date("2001-12-31"), endDOY = 365)
 end
 
+
+############################################################################################
+# Developer Performance Optimizations (see https://julialang.github.io/PrecompileTools.jl/stable/)
+# Guide Precompilation
+@setup_workload begin
+    # Putting some things in `@setup_workload` instead of `@compile_workload` can reduce the size of the
+    # precompile file and potentially make loading faster.
+    dates   = Date("2018-01-01"):Day(1):Date("2022-12-31")
+    Tavg    = 
+        30 * (0.3 .+ 1/2*cos.(dayofyear.(dates)/365 * 2π .- π)) .+ 
+        rand([-34.9 : 0.1 : 39.9;]/10, length(dates))
+
+    @compile_workload begin
+        # all calls in this block will be precompiled, regardless of whether
+        # they belong to your package or not (on Julia 1.8 and higher)
+        vegperiod(
+            dates, 
+            Tavg, 
+            Menzel("Picea abies (frueh)", est_prev = 2), 
+            VonWilpert())
+    end
+end
 
 end # module VegetationPeriods
