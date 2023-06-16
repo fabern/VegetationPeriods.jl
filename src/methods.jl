@@ -18,12 +18,15 @@ The argument `species` is required and must be one of
 - `"Quercus petraea"`,
 - `"Fagus sylvatica"`.
 
-The optional argument `est_prev` is the integer number of years to **est**imate **prev**ious
-year's chill days for the first year.
-`Menzel` requires the number of chill days of previous November and December.
-With `est_prev = 0` the first year in the time series is used as previous year and dropped from
-the time series. To keep the first year, chill days from the previous year can be estimated
-as an average of the first `n` years, when setting argument `est_prev = n`.
+The optional argument `est_prev` is the integer number of years that are used to compute the
+average number of November and December chill days as a best guess to be used to start
+the first year in case they are missing.
+`Menzel` requires the number of chill days of previous November and December. You can 
+provide them e.g. by starting your time series on November 1st (an set `est_prev = 0`).
+If the time series starts on January 1st, the previous chill days are not available for the 
+first year and hennce we can either drop the first year from the output (happens with 
+`est_prev = 0`) or estimate the number of chill days in November and December previous to 
+the first year in the time series (`est_prev = n`).
 
 ## Reference
 Menzel, A. (1997)

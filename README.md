@@ -82,39 +82,43 @@ To get help for any of these check out the documentation (`?` followed by the fu
 help?> vegperiod
 search: vegperiod VegetationPeriods
 
-  Calculate start and end date of vegetation periods based on daily average air temperature and the day of the
-  year (DOY). The sum of day degrees within the vegetation period can be included for convenience.
+  Calculate start and end date of vegetation periods based on daily average air temperature
+  and the day of the year (DOY). The sum of day degrees within the vegetation period can be
+  included for convenience.
 
-  Common methods for determining the onset and end of thermal vegetation periods are provided, for details see the
-  documentation of each method. Popular choices with regard to forest trees in Germany are Menzel and vonWilpert.
-  Climate change impact studies at NW-FVA are frequently conducted using Menzel with "Picea abies (frueh)" and
-  NuskeAlbert for all tree species; with tree species specifics accounted for in subsequent statistical models.
+  Common methods for determining the onset and end of thermal vegetation periods are provided,
+  for details see the documentation of each method. Popular choices with regard to forest
+  trees in Germany are Menzel and vonWilpert. Climate change impact studies at NW-FVA are
+  frequently conducted using Menzel with "Picea abies (frueh)" and NuskeAlbert for all tree
+  species; with tree species specifics accounted for in subsequent statistical models.
 
-  Available methods can be queried with subtypes(VegetationStartMethod) and subtypes(VegetationEndMethod)
+  Available methods can be queried with subtypes(VegetationStartMethod) and
+  subtypes(VegetationEndMethod)
 
   Arguments:
 
-    •  dates is a vector of calendar dates (object of class Date). Must contain entire years if est_prev > 0
-       else the first year may comprise only November and December.
+    •  dates is a vector of calendar dates (object of class Date). Must contain entire
+       years if est_prev > 0 else the first year may comprise only November and December.
 
-    •  Tavg is a vector of daily average air temperatures in degree Celsius. Same length as dates.
+    •  Tavg is a vector of daily average air temperatures in degree Celsius. Same length
+       as dates.
 
     •  start_method is a VegetationStartMethod.
 
     •  end_method is a VegetationEndMethod.
 
-    •  Tsum_out is a boolean. Return the sum of daily mean temperatures above Tsum_crit within vegetation
-       period, also known as growing day degrees.
+    •  Tsum_out is a boolean. Return the sum of daily mean temperatures above Tsum_crit
+       within vegetation period, also known as growing day degrees.
 
-    •  Tsum_crit threshold for sum of day degrees. Only daily mean temperatures above Tsum_crit will be
-       tallied. The default of 0 prevents negative daily temperatures from reducing the sum. Climate change
-       studies often use a threshold of 5.
+    •  Tsum_crit threshold for sum of day degrees. Only daily mean temperatures above
+       Tsum_crit will be tallied. The default of 0 prevents negative daily temperatures
+       from reducing the sum. Climate change studies often use a threshold of 5.
 
-    •  check_data is a boolean. Perform plausibility checks on the temperature data. Plausible range is -35
-       to +40°C.
+    •  check_data is a boolean. Perform plausibility checks on the temperature data.
+       Plausible range is -35 to +40°C.
 
-  Returns: A DataFrame with year, date and DOY of start and end day of the vegetation period for (each) year of
-  the input data.
+  Returns: A DataFrame with year, date and DOY of start and end day of the vegetation period
+  for (each) year of the input data.
 ```
 Or for the start method `Menzel()`:
 ```
@@ -123,8 +127,8 @@ search: Menzel
 
   Menzel(species; est_prev::Int = 0)
 
-  The start method Menzel implements the algorithm described in Menzel (1997). The method is parameterized for 10
-  common tree species. It needs previous year's chill days.
+  The start method Menzel implements the algorithm described in Menzel (1997). The method is
+  parameterized for 10 common tree species. It needs previous year's chill days.
 
   The argument species is required and must be one of
 
@@ -148,11 +152,14 @@ search: Menzel
 
     •  "Fagus sylvatica".
 
-  The optional argument est_prev is the integer number of years to estimate previous year's chill days for the
-  first year. Menzel requires the number of chill days of previous November and December. With est_prev = 0 the
-  first year in the time series is used as previous year and dropped from the time series. To keep the first year,
-  chill days from the previous year can be estimated as an average of the first n years, when setting argument
-  est_prev = n.
+  The optional argument est_prev is the integer number of years that are used to compute the
+  average number of November and December chill days as a best guess to be used to start the
+  first year in case they are missing. Menzel requires the number of chill days of previous
+  November and December. You can provide them e.g. by starting your time series on November
+  1st (an set est_prev = 0). If the time series starts on January 1st, the previous chill days
+  are not available for the first year and hennce we can either drop the first year from the
+  output (happens with est_prev = 0) or estimate the number of chill days in November and
+  December previous to the first year in the time series (est_prev = n).
 ```
 
 ## Attributions and License
